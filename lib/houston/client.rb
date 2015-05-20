@@ -34,9 +34,8 @@ module Houston
       @timeout = Float(ENV['APN_TIMEOUT'] || 0.5)
     end
 
-    def push(*notifications)
+    def process_push(*notifications)
       return if notifications.empty?
-
       notifications.flatten!
 
       Connection.open(@gateway_uri, @certificate, @passphrase) do |connection|
@@ -44,34 +43,40 @@ module Houston
         last_time = Time.now
 
         notifications.each_with_index do |notification, index|
-          next unless notification.kind_of?(Notification)
-          next if notification.sent?
-          next unless notification.valid?
+          begin
+            next unless notification.kind_of?(Notification)
+            next if notification.sent?
+            next unless notification.valid?
 
-          notification.id = index
+            notification.id = index
 
-          connection.write(notification.message)
-          notification.mark_as_sent!
-          logger = Logger.new("houston_test.log", 'daily')
-          logger.info("sent_at:#{Time.now.to_s}, diff: #{Time.now - last_time}")
-          last_time = Time.now
+            connection.write(notification.message)
+            notification.mark_as_sent!
+            logger = Logger.new("houston_test.log", 'daily')
+            logger.info("sent_at:#{Time.now.to_s}, connection: #{connection}, diff: #{Time.now - last_time}")
+            last_time = Time.now
 
-          read_socket, write_socket, errors = IO.select([ssl], [], [ssl], 0.1)
-          if (read_socket && read_socket[0])
-            if error = connection.read(6)
-              command, status, index = error.unpack("ccN")
-              notification.apns_error_code = status
-              notification.mark_as_unsent!
-              logger = Logger.new("houston_test.log", 'daily')
-              logger.error("error_at:#{Time.now.to_s}, diff: #{Time.now - last_time}, error_code: #{status}, device_token: #{notification.token}")
-              last_time = Time.now
-              return index
+            read_socket, write_socket, errors = IO.select([ssl], [], [ssl], 0.2)
+            if (read_socket && read_socket[0])
+              if error = connection.read(6)
+                command, status, error_index = error.unpack("ccN")
+                notification.apns_error_code = status
+                notification.mark_as_unsent!
+                logger = Logger.new("houston_test.log", 'daily')
+                logger.error("error_at:#{Time.now.to_s}, diff: #{Time.now - last_time}, error_code: #{status}, device_token: #{notification.token}")
+                last_time = Time.now
+                error_index ||= index
+                return error_index, notification
+              end
             end
+          rescue Exception => e
+            logger = Logger.new("houston_test.log", 'daily')
+            logger.error("GENERAL EXCEPTION: #{e.message}")
+            return index, nil
           end
         end
       end
-
-      -1
+      return -1, nil
     end
 
     def unregistered_devices
