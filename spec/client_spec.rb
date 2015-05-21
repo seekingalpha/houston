@@ -73,9 +73,9 @@ describe Houston::Client do
       end
     end
 
-    describe '#push' do
+    describe '#process_push' do
       it 'should accept zero arguments' do
-        expect(Houston::Client.development.push()).to be_nil()
+        expect(Houston::Client.development.process_push()).to be_nil()
       end
     end
   end
