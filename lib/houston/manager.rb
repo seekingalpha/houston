@@ -3,7 +3,7 @@ module Houston
     def self.push(apn, *notifications)
       notifications.flatten!
       failed_notifications = []
-      groups = notifications.each_slice(100).to_a
+      groups = notifications.each_slice(2000).to_a
       threads = []
 
       groups.each_with_index do |group, index|
