@@ -1,9 +1,25 @@
 module Houston
+  MIN_NOTIFICATIONS = 10
+  MAX_THREADS = 200
+
   class Manager
+    def self.max_threads total
+      total = total.to_f
+      if total <= MIN_NOTIFICATIONS
+        return 1
+      end
+      if total <= MIN_NOTIFICATIONS*MAX_THREADS
+        return (total/MIN_NOTIFICATIONS).ceil.to_i
+      end
+      return MAX_THREADS
+    end
+
     def self.push(apn, *notifications)
       notifications.flatten!
       failed_notifications = []
-      groups = notifications.each_slice(2000).to_a
+      nthreads = max_threads notifications.size
+      groups = notifications.each_slice(nthreads).to_a
+
       threads = []
 
       groups.each_with_index do |group, index|
