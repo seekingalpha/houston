@@ -34,7 +34,7 @@ module Houston
       return false if open?
 
       logger = Logger.new("houston_test.log", 'daily')
-      logger.info("new connection oppened at: #{Time.now.to_s}")
+      logger.info("#{Process.pid} new connection oppened at: #{Time.now.to_s}")
 
       @socket = TCPSocket.new(@uri.host, @uri.port)
 

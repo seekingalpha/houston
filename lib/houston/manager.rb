@@ -21,6 +21,7 @@ module Houston
       groups = notifications.each_slice(nthreads).to_a
 
       threads = []
+      pid = Process.pid
 
       groups.each_with_index do |group, index|
         threads << Thread.new do
@@ -35,7 +36,7 @@ module Houston
             end
           end
           logger = Logger.new("houston_test.log", 'daily')
-          logger.error("finished thread#{index}")
+          logger.error("#{pid} finished thread#{index}")
         end
       end
       threads.each{|t| t.join}

@@ -32,6 +32,7 @@ module Houston
       @certificate = File.read(ENV['APN_CERTIFICATE']) if ENV['APN_CERTIFICATE']
       @passphrase = ENV['APN_CERTIFICATE_PASSPHRASE']
       @timeout = Float(ENV['APN_TIMEOUT'] || 0.5)
+      @pid = Process.pid
     end
 
     def process_push(*notifications)
@@ -53,7 +54,7 @@ module Houston
             connection.write(notification.message)
             notification.mark_as_sent!
             logger = Logger.new("houston_test.log", 'daily')
-            logger.info("sent_at:#{Time.now.to_s}, connection: #{connection}, diff: #{Time.now - last_time}")
+            logger.info("#{@pid} sent_at:#{Time.now.to_s}, connection: #{connection}, diff: #{Time.now - last_time}")
             last_time = Time.now
 
             read_socket, write_socket, errors = IO.select([ssl], [], [ssl], 0.2)
@@ -63,7 +64,7 @@ module Houston
                 notification.apns_error_code = status
                 notification.mark_as_unsent!
                 logger = Logger.new("houston_test.log", 'daily')
-                logger.error("error_at:#{Time.now.to_s}, diff: #{Time.now - last_time}, error_code: #{status}, device_token: #{notification.token}")
+                logger.error("#{@pid} error_at:#{Time.now.to_s}, diff: #{Time.now - last_time}, error_code: #{status}, device_token: #{notification.token}")
                 last_time = Time.now
                 error_index ||= index
                 return error_index, notification
@@ -71,7 +72,7 @@ module Houston
             end
           rescue Exception => e
             logger = Logger.new("houston_test.log", 'daily')
-            logger.error("GENERAL EXCEPTION: #{e.message}")
+            logger.error("#{@pid} GENERAL EXCEPTION: #{e.message}")
             return index, nil
           end
         end
