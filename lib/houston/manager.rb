@@ -1,6 +1,6 @@
 module Houston
-  MIN_NOTIFICATIONS = 10
-  MAX_THREADS = 200
+  MIN_NOTIFICATIONS = 50
+  MAX_THREADS = 140
 
   class Manager
     def self.max_threads total
