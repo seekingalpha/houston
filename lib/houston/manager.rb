@@ -1,3 +1,5 @@
+require 'thread/pool'
+
 module Houston
   MIN_NOTIFICATIONS = 50
   MAX_THREADS = 140
@@ -18,6 +20,10 @@ module Houston
       notifications.flatten!
       failed_notifications = []
       nthreads = max_threads notifications.size
+      number_threads = max_threads(notifications.size)
+      puts 'cheguei'
+      pool = Thread.pool(number_threads)
+      puts pool.size
       groups = notifications.each_slice(nthreads).to_a
 
       threads = []
