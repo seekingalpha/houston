@@ -53,8 +53,6 @@ module Houston
 
             connection.write(notification.message)
             notification.mark_as_sent!
-            logger = Logger.new("houston_test.log", 'daily')
-            logger.info("#{@pid} sent_at:#{Time.now.to_s}, connection: #{connection}, diff: #{Time.now - last_time}")
             last_time = Time.now
 
             read_socket, write_socket, errors = IO.select([ssl], [], [ssl], 0.2)
@@ -71,8 +69,6 @@ module Houston
               end
             end
           rescue Exception => e
-            logger = Logger.new("houston_test.log", 'daily')
-            logger.error("#{@pid} GENERAL EXCEPTION: #{e.message}")
             return index, nil
           end
         end

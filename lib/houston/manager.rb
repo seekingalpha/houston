@@ -21,14 +21,14 @@ module Houston
       failed_notifications = []
       nthreads = max_threads notifications.size
       number_threads = max_threads(notifications.size)
-      puts 'cheguei'
       pool = Thread.pool(number_threads)
-      puts pool.size
+      if pool.size < nthreads
+        logger = Logger.new("houston_test.log", 'daily')
+        logger.error("can't create #{nthreads} threads. Using #{pool.size} threads.")
+      end
       groups = notifications.each_slice(nthreads).to_a
 
       threads = []
-      pid = Process.pid
-
       groups.each_with_index do |group, index|
         threads << Thread.new do
           index = 0
@@ -41,8 +41,6 @@ module Houston
             rescue
             end
           end
-          logger = Logger.new("houston_test.log", 'daily')
-          logger.error("#{pid} finished thread#{index}")
         end
       end
       threads.each{|t| t.join}
