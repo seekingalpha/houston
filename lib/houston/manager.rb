@@ -2,7 +2,7 @@ require 'thread/pool'
 
 module Houston
   MIN_NOTIFICATIONS = 50
-  MAX_THREADS = 140
+  MAX_THREADS = ENV['APN_MAX_THREADS'] || 300
 
   class Manager
     def self.max_threads total
