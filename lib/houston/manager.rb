@@ -30,7 +30,7 @@ module Houston
 
       threads = []
       groups.each_with_index do |group, index|
-        threads << Thread.new do
+        pool.process do
           index = 0
           while (index != -1) do
             index, failed = apn.process_push(group)
@@ -43,7 +43,7 @@ module Houston
           end
         end
       end
-      threads.each{|t| t.join}
+      pool.shutdown
       failed_notifications
     end
   end
