@@ -68,7 +68,7 @@ module Houston
                 return error_index, notification
               end
             end
-          rescue Exception => e
+          rescue => e
             return index, nil
           end
         end
