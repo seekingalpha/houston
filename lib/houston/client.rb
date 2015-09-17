@@ -69,6 +69,7 @@ module Houston
               end
             end
           rescue => e
+            Logger.new("houston_test.log", 'daily').error("Exception #{e.class.name}: #{e.message}\n#{e.backtrace[0,5].join("\n")}") rescue nil #want to log, don't care if fails
             return index, nil
           end
         end
