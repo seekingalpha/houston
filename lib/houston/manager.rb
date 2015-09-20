@@ -16,16 +16,17 @@ module Houston
     def self.push(apn, *notifications)
       notifications.flatten!
       failed_notifications = []
-      nthreads = max_threads notifications.size
-      number_threads = max_threads(notifications.size)
-      pool = Thread.pool(number_threads)
-      if pool.size < nthreads
         logger = Logger.new("houston_test.log", 'daily')
         logger.error("can't create #{nthreads} threads. Using #{pool.size} threads.")
-      end
-      groups = notifications.each_slice(nthreads).to_a
+      num_threads = max_threads notifications.size
+      pool = Thread.pool(num_threads)
+      if pool.size < num_threads
 
-      threads = []
+        raise "Can't create threads at all" if pool.size == 0
+      end
+
+      groups = notifications.each_slice((notifications.size.to_f/pool.size).ceil.to_i).to_a
+
       groups.each_with_index do |group, index|
         pool.process do
           index = 0
