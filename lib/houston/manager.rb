@@ -7,13 +7,10 @@ module Houston
   class Manager
     def self.max_threads total
       total = total.to_f
-      if total <= MIN_NOTIFICATIONS
-        return 1
+      if total <= MIN_NOTIFICATIONS then 1
+      elsif total <= MIN_NOTIFICATIONS*MAX_THREADS then (total/MIN_NOTIFICATIONS).ceil.to_i
+      else MAX_THREADS
       end
-      if total <= MIN_NOTIFICATIONS*MAX_THREADS
-        return (total/MIN_NOTIFICATIONS).ceil.to_i
-      end
-      return MAX_THREADS
     end
 
     def self.push(apn, *notifications)
