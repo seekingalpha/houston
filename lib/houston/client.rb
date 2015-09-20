@@ -49,24 +49,27 @@ module Houston
         notifications.each_with_index do |notification, index|
           begin
             next unless notification.kind_of?(Notification)
-            next if notification.sent?
             next unless notification.valid?
 
             notification.id = index
 
             connection.write(notification.message)
-            notification.mark_as_sent!
             last_time = Time.now
 
-            read_socket, write_socket, errors = IO.select([ssl], [], [ssl], 0.2)
+            sleep_time = index == notifications.size-1 ? 1 : 0.2 #give apple time to respond on last
+            read_socket, write_socket, errors = IO.select([ssl], [], [ssl], sleep_time)
             if (read_socket && read_socket[0])
               if error = connection.read(6)
                 command, status, error_index = error.unpack("ccN")
-                notification.apns_error_code = status
-                notification.mark_as_unsent!
-                logger.error("diff: #{Time.now - last_time}, error_code: #{status}, device_token: #{notification.token}")
-                error_index ||= index
-                return error_index, notification
+                error_notification = notifications[error_index]
+                if error_notification
+                  error_notification.apns_error_code = status
+                  logger.error("diff: #{Time.now - last_time}, index: #{error_index}, code: #{status}, device_token: #{error_notification.token}")
+                else
+                  logger.error("diff: #{Time.now - last_time}, index: #{error_index}, code: #{status}, device_token: UNKNOWN")
+                end
+
+                return error_index, error_notification
               end
             end
           rescue => e
