@@ -14,13 +14,13 @@ module Houston
     end
 
     def self.push(apn, *notifications)
+      start_time = Time.now
       notifications.flatten!
       failed_notifications = []
-        logger = Logger.new("houston_test.log", 'daily')
-        logger.error("can't create #{nthreads} threads. Using #{pool.size} threads.")
       num_threads = max_threads notifications.size
       pool = Thread.pool(num_threads)
       if pool.size < num_threads
+        apn.logger.error "can't create #{num_threads} threads. Using #{pool.size} threads."
 
         raise "Can't create threads at all" if pool.size == 0
       end
@@ -37,7 +37,9 @@ module Houston
           end
         end
       end
+
       pool.shutdown
+      apn.logger.info("Done. took #{((Time.now-start_time)/60).round(2)}m")
       failed_notifications
     end
   end

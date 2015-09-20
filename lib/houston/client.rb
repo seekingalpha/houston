@@ -8,7 +8,7 @@ module Houston
   APPLE_DEVELOPMENT_FEEDBACK_URI = "apn://feedback.sandbox.push.apple.com:2196"
 
   class Client
-    attr_accessor :gateway_uri, :feedback_uri, :certificate, :passphrase, :timeout
+    attr_accessor :gateway_uri, :feedback_uri, :certificate, :passphrase, :timeout, :logger
 
     class << self
       def development
@@ -33,6 +33,11 @@ module Houston
       @passphrase = ENV['APN_CERTIFICATE_PASSPHRASE']
       @timeout = Float(ENV['APN_TIMEOUT'] || 0.5)
       @pid = Process.pid
+      @logger = Logger.new("log/houston_test_#{Time.now.strftime('%Y%m%d')}.log")
+      @logger.datetime_format = Time.now.strftime "%Y-%m-%dT%H:%M:%S"
+      @logger.formatter = proc do |severity, datetime, progname, msg|
+        "#{@pid}: #{datetime} #{severity}: #{msg}\n"
+      end
     end
 
     def process_push(*notifications)
@@ -61,15 +66,14 @@ module Houston
                 command, status, error_index = error.unpack("ccN")
                 notification.apns_error_code = status
                 notification.mark_as_unsent!
-                logger = Logger.new("houston_test.log", 'daily')
-                logger.error("#{@pid} error_at:#{Time.now.to_s}, diff: #{Time.now - last_time}, error_code: #{status}, device_token: #{notification.token}")
+                logger.error("error_at:#{Time.now.to_s}, diff: #{Time.now - last_time}, error_code: #{status}, device_token: #{notification.token}")
                 last_time = Time.now
                 error_index ||= index
                 return error_index, notification
               end
             end
           rescue => e
-            Logger.new("houston_test.log", 'daily').error("Exception #{e.class.name}: #{e.message}\n#{e.backtrace[0,5].join("\n")}") rescue nil #want to log, don't care if fails
+            logger.error("Exception #{e.class.name}: #{e.message}\n#{e.backtrace[0,5].join("\n")}") rescue nil #want to log, don't care if fails
             return index, notification
           end
         end
