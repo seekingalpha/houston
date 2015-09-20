@@ -46,8 +46,6 @@ module Houston
 
       Connection.open(@gateway_uri, @certificate, @passphrase) do |connection|
         ssl = connection.ssl
-        last_time = Time.now
-
         notifications.each_with_index do |notification, index|
           begin
             next unless notification.kind_of?(Notification)
@@ -66,8 +64,7 @@ module Houston
                 command, status, error_index = error.unpack("ccN")
                 notification.apns_error_code = status
                 notification.mark_as_unsent!
-                logger.error("error_at:#{Time.now.to_s}, diff: #{Time.now - last_time}, error_code: #{status}, device_token: #{notification.token}")
-                last_time = Time.now
+                logger.error("diff: #{Time.now - last_time}, error_code: #{status}, device_token: #{notification.token}")
                 error_index ||= index
                 return error_index, notification
               end
