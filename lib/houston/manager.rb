@@ -35,11 +35,7 @@ module Houston
           while (index != -1) do
             index, failed = apn.process_push(group)
             failed_notifications << failed if failed
-            begin # in the last run it fails...I still need to check why
-              group.shift(index + 1) if index && index > -1 && failed
-              group.shift(index) if index > -1 && !failed
-            rescue
-            end
+            group.shift(index + 1) if index && index > -1 && failed
           end
         end
       end
